@@ -1,0 +1,22 @@
+# 스프링 부트에서 테스트 모드에는 설정을 안해줘도 자동으로 메모리 모드로 사용해준다.
+# 스프링 부트 테스트에서는 ddl-auto: create-drop이 기본이다. 이것은 테스트를 다 돌리고 drop을 날려주는 것
+
+spring:
+  #datasource:
+  #  url: jdbc:h2:mem:test
+  #  username: sa
+  #  password:
+  #  driver-class-name: org.h2.Driver
+
+  #jpa:
+  #  hibernate:
+  #    ddl-auto: create
+  #  properties:
+  #    hibernate:
+        #show_sql: true #systemOut?? ???
+  #      format_sql: true
+
+# ??? ??
+logging.level:
+  org.hibernate.SQL: debug
+  org.hibernate.orm.jdbc.bind: trace

@@ -13,10 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 //@ExtendWith(SpringExtension.class)
 @RunWith(SpringRunner.class)
 @SpringBootTest
-class MemberRepositoryTest {
+class MemberRepositoryBeforeTest {
 
     @Autowired
-    MemberRepository memberRepository;
+    MemberRepositoryBefore memberRepositoryBefore;
 
     @Test
     @Transactional
@@ -27,10 +27,10 @@ class MemberRepositoryTest {
         member.setUsername("memberA");
 
         // when
-        Long savedId = memberRepository.save(member);
+        Long savedId = memberRepositoryBefore.save(member);
 
         // then
-        Member findMember = memberRepository.find(savedId);
+        Member findMember = memberRepositoryBefore.find(savedId);
 
         Assertions.assertThat(findMember.getId()).isEqualTo(member.getId());
         Assertions.assertThat(findMember.getUsername()).isEqualTo(member.getUsername());
