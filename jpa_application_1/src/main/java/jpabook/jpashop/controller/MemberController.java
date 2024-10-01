@@ -11,6 +11,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class MemberController {
@@ -40,5 +42,13 @@ public class MemberController {
         memberService.join(member);
 
         return "redirect:/";
+    }
+
+    /** Entity는 순수하게 유지를 해줘야한다. 변경이 필요한 경우에는 DTO에 담아서 넘겨야한다.
+     * API를 만들 때는 웹으로 절대 Entity를 반환하면 안된다. */
+    @GetMapping("/members")
+    public String list(Model model) {
+        model.addAttribute("members", memberService.findMembers());
+        return "members/memberList";
     }
 }
