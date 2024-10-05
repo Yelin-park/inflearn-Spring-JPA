@@ -5,6 +5,7 @@ import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.OrderSimpleQueryDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -81,5 +82,15 @@ public class OrderSimpleApiController {
     public List<SimpleOrderDto> ordersV3() {
         List<Order> orders = orderRepository.findAllWithMemberDelivery();
         return orders.stream().map(o -> new SimpleOrderDto(o)).collect(Collectors.toList());
+    }
+
+    /**
+     * 간단한 주문 조회 V4 : JPA에서 DTO로 바로 조회
+     * 쿼리 1번 호출
+     * select 절에서 원하는 데이터만 선택해서 조회
+     */
+    @GetMapping("/api/v4/simple-orders")
+    public List<OrderSimpleQueryDto> ordersV4() {
+        return orderRepository.findOrderDtos();
     }
 }
