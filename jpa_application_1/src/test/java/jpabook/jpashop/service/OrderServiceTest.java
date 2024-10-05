@@ -52,7 +52,7 @@ public class OrderServiceTest {
     }
 
     private Book createBook(String name, int price, int stockQuantity) {
-        Book book = Book.createBook(null, name, price, stockQuantity, "", "");
+        Book book = Book.createBook(name, price, stockQuantity, "", "");
         em.persist(book);
         return book;
     }
