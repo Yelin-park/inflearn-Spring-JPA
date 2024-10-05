@@ -71,4 +71,15 @@ public class OrderSimpleApiController {
             this.address = order.getDelivery().getAddress(); // Lazy 강제 초기화
         }
     }
+
+    /**
+     * 간단한 주문 조회 V3 : 엔티티를 DTO로 변환 - 페치 조인 최적화
+     * 엔티티를 페치 조인을 사용해서 쿼리 1번에 조회
+     * 페치 조인으로 order -> member, order -> delivery는 이미 조회된 상태이므로 지연로딩X
+     */
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery();
+        return orders.stream().map(o -> new SimpleOrderDto(o)).collect(Collectors.toList());
+    }
 }
