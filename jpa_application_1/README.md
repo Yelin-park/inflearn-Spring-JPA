@@ -199,3 +199,9 @@
         select ... where array_contains([1,2,3],item.item_id)
         select ... item.item_id where in(1,2,3)
      ~~~
+ ### 4. JPA에서 DTO 직접 조회(V4)
+- 쿼리는 루트 1번, 컬렉션 N번 실행
+- ToOne 관계들을 먼저 조회하고, ToMany 관계는 각각 별도로 처리한다.
+  - ToOne 관계는 조인해도 데이터 row 수가 증가하지 않는다.
+  - ToMany 관계는 조인하면 row 수가 증가한다.
+- row 수가 증가하지 않는 ToOne 관계는 조인으로 최적화 하기 쉬우므로 한번에 조회하고, ToMany 관계는 최적화하기 어려우므로 findOrderItems()와 같은 별도의 메서드로 조회한다.
