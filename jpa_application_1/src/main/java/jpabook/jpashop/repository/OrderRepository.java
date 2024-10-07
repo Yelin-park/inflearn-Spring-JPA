@@ -98,6 +98,17 @@ public class OrderRepository {
         ).getResultList();
     }
 
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class
+                )
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
     /**
      * hibernate 6 버전 부터는 distinct가 자동으로 적용되기 때문에 명시하지 않아도 된다
      */

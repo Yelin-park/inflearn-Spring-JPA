@@ -12,6 +12,7 @@ spring:
       hibernate:
         #show_sql: true #systemOut?? ???
         format_sql: true
+        default_batch_fetch_size: 100 # 페이징과 한계 돌파
 
   thymeleaf:
     prefix: classpath:/templates/

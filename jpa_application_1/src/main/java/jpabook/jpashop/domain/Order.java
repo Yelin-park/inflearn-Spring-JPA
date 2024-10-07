@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class Order {
     @JoinColumn(name = "member_id") // FK
     private Member member;
 
+    @BatchSize(size = 1000)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL) // cascade를 설정함으로 Order를 저장/삭제할 때 OrderItem도 저장/삭제되도록 설정
     private List<OrderItem> orderItems = new ArrayList<>();
 
