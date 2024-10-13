@@ -205,3 +205,7 @@
   - ToOne 관계는 조인해도 데이터 row 수가 증가하지 않는다.
   - ToMany 관계는 조인하면 row 수가 증가한다.
 - row 수가 증가하지 않는 ToOne 관계는 조인으로 최적화 하기 쉬우므로 한번에 조회하고, ToMany 관계는 최적화하기 어려우므로 findOrderItems()와 같은 별도의 메서드로 조회한다.
+### 5. JPA에서 DTO 직접 조회 - 컬렉션 조회 최적화(V5)
+- 쿼리는 루트 1번, 컬렉션 1번 총 2번 호출
+- ToOne 관계들을 먼저 조회하고, ToMany 관계는 ToOne에서 얻은 식별자(orderId)로 ToMany 관계인 OrderItem을 한꺼번에 조회
+- MAP을 사용해서 매칭 성능 향상(O(1))
