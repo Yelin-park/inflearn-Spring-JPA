@@ -13,7 +13,7 @@ spring:
         #show_sql: true #systemOut?? ???
         format_sql: true
         default_batch_fetch_size: 100 # 페이징과 한계 돌파
-    open-in-view: false #OSIV
+    #open-in-view: false #OSIV
 
   thymeleaf:
     prefix: classpath:/templates/
