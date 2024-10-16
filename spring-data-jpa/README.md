@@ -11,6 +11,7 @@ public class AppConfig {}
 ```
 
 - **스프링 데이터 JPA가 구현 클래스 대신 생성**
+
 ![spring_data_jpa.png](image/spring_data_jpa.png)
   - `org.springframework.data.repository.Repository`를 구현한 클래스는 스캔 대상
     - 스프링 데이터 JPA가 알아서 구현체를 만들고 주입을 해준다.
@@ -37,6 +38,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {}
 ~~~
 
 - **공통 인터페이스 구성**
+
 ![spring_data_and_jpa_interface.png](image/spring_data_and_jpa_interface.png)
 
 - **제네릭 타입**
