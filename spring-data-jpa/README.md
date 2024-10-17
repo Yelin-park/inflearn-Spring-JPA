@@ -1,6 +1,7 @@
 # 스프링 데이터 JPA 강의 정리
 
-## 1. 공통 인터페이스 설정
+## 1. JPA 공통 인터페이스
+### 1. 공통 인터페이스 설정
 - **JavaConfig 설정 - 스프링 부트 사용시 생략 가능**
   - 스프링 부트 사용시`@SpringBootApplication` 위치를 지정(해당 패키지와 하위 패키지 인식)
   - 만약, 위치가 달라지면 `@EnableJpaRepositories` 필요
@@ -22,7 +23,7 @@ public class AppConfig {}
     - 컴포넌트 스캔을 스프링 데이터 JPA가 자동으로 처리
     - JPA 예외를 스프링 예외로 변환하는 과정도 자동으로 처리
 
-## 2. 공통 인터페이스 분석
+### 2. 공통 인터페이스 분석
 - JpaRepository 인터페이스 : 공통 CRUD 제공
 - 제네릭은 <엔티티 타입, 식별자 타입> 설정
 - `JpaRepository` 공통 기능 인터페이스
@@ -53,3 +54,32 @@ public interface MemberRepository extends JpaRepository<Member, Long> {}
   - `findAll(…)` : 모든 엔티티를 조회한다. 정렬(`Sort`)이나 페이징(`Pageable`) 조건을 파라미터로 제공할 수 있다.
   
 - 참고: `JpaRepository` 는 대부분의 공통 메서드를 제공한다.
+
+## 3. 쿼리 메서드 기능
+* **쿼리 메서드 기능 3가지**
+  * 메서드 이름으로 쿼리 생성
+  * 메서드 이름으로 JPA NamedQuery 호출
+  * `@Query` 어노테이션을 사용해서 리파지토리 인터페이스에 쿼리 직접 정의
+
+### 1. 메서드 이름으로 쿼리 생성
+~~~ java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
+}
+~~~
+* 스프링 데이터 JPA는 메서드 이름을 분석해서 JPQL을 생성하고 실행한다.
+  * 엔티티의 필드명이 변경되면 인터페이스에 정의한 메서드 이름도 꼭 함께 변경해야한다.
+  * 변경하지 않으면 애플리케이션 시작하는 시점에 No Property라는 오류가 발생한다.
+* 쿼리 메서드 필터 조건은 스프링 데이터 JPA 공식 문서를 참고하자!
+  * https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html
+
+* **스프링 데이터 JPA가 제공하는 쿼리 메서드 기능**
+  * 조회: find…By ,read…By ,query…By get…By
+    * 예:) findHelloBy 처럼 ...에 식별하기 위한 내용(설명)이 들어가도 된다. 
+  * COUNT: count…By 반환타입 `long`
+  * EXISTS: exists…By 반환타입 `boolean`
+  * 삭제: delete…By, remove…By 반환타입 `long`
+  * DISTINCT: findDistinct, findMemberDistinctBy
+  * LIMIT: findFirst3, findFirst, findTop, findTop3
+
+### 2. JPA NamedQuery
