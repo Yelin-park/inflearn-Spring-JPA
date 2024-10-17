@@ -83,3 +83,45 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
   * LIMIT: findFirst3, findFirst, findTop, findTop3
 
 ### 2. JPA NamedQuery
+* 쿼리에 이름을 부여하고 호출하는 기능이다.
+* 장점 : 애플리케이션 로딩 시점에 문법 오류가 있으면 오류를 보여준다.
+* 사용 방법
+  * 엔티티에 @NamedQuery 어노테이션으로 Named 쿼리 정의
+    ``` java
+    @Entity
+    @NamedQuery(
+        name="Member.findByUsername",
+        query="select m from Member m where m.username = :username")
+    public class Member {
+      ...
+    }
+    ```
+    
+  * **JPA를 직접 사용해서 Named 쿼리 호출**
+    ```java
+    public class MemberRepository {
+        public List<Member> findByUsername(String username) {
+            List<Member> resultList =
+            em.createNamedQuery("Member.findByUsername", Member.class)
+                .setParameter("username", username)
+                .getResultList();
+        }
+    }
+    ```
+
+* **스프링 데이터 JPA로 Named 쿼리 호출**
+    * @Query를 생략하고 메서드 이름만으로 Named 쿼리를 호출할 수 있다.
+    * 스프링 데이터 JPA는 선언한 도메인 클래스 + . + 메서드 이름으로 Named 쿼리를 찾아서 실행한다.
+    * 만약 실행할 Named 쿼리가 없으면 메서드 이름으로 쿼리 생성 전략을 사용한다.
+    * 필요하면 전략을 변경할 수 있지만 권장하는 방법은 아니다.
+  ```java
+    public interface MemberRepository
+        extends JpaRepository<Member, Long> { //** 여기 선언한 Member 도메인 클래스
+  
+        @Query(name = "Member.findByUsername") // 아래와 같이 해당 어노테이션이 없어도됨
+        List<Member> findByUsername(@Param("username") String username);
+  
+        List<Member> findByUsername(@Param("username") String username);
+    }
+  ```
+
