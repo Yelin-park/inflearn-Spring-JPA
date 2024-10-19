@@ -125,3 +125,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     }
   ```
 
+### 3. @Query, 리포지토리 메소드에 쿼리 정의하기
+* `org.springframework.data.jpa.repository.Query` 어노테이션을 사용
+* 실행할 메서드에 정적 쿼리를 직접 작성하므로 이름 없는 Named 쿼리라 할 수 있음
+* JPA Named 쿼리처럼 애플리케이션 실행 시점에 문법 오류를 반결할 수 있음
+```java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    @Query("select m from Member m where m.username= :username and m.age = :age")
+    List<Member> findUser(@Param("username") String username, @Param("age") int age);
+}
+```
