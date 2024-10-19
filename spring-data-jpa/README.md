@@ -174,3 +174,21 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 @Query("select m from Member m where m.username in :names")
 List<Member> findByNames(@Param("names") List<String> names);
 ```
+
+### 6. 반환 타입
+스프링 데이터 JPA는 유연한 반환 타입을 지원한다.
+```markdown
+List<Member> findByUsername(String name); //컬렉션
+Member findByUsername(String name); //단건
+Optional<Member> findByUsername(String name); //단건 Optional
+```
+* 조회 결과가 많거나 없으면?
+  * 컬렉션은 결과가 없다면 빈 컬렉션을 반환한다
+  * 단건 조회시
+    * 결과가 없으면 null을 반환
+    * 결과가 2건 이상이면 `javax.persistence.NonUniqueResultException`이 발생
+* 참고
+  * 단건으로 지정한 메서드를 호출하면 스프링 데이터 JPA는 내부에서 JPQL의 `Query.getSingleResult()` 메서드를 호출한다.
+  * 이 메서드를 호출했을 때 결과가 없으면 `javax.persistence.NoResultException` 예외가 발생한다.
+  * 스프링 데이터 JPA는 단건을 조회할 때 이 예외가 발생하면 예외를 무시하고 대신에 null을 반환한다.
+  * Optional을 사용하면 Optional.empty가 넘어온다.

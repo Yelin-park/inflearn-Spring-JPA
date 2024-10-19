@@ -12,6 +12,7 @@ import study.data_jpa.entity.Team;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @SpringBootTest
 @Transactional
@@ -164,6 +165,25 @@ class MemberRepositoryTest {
 
         //then
         Assertions.assertThat(result.size()).isEqualTo(2);
+    }
+
+    @Test
+    public void returnType() throws Exception {
+        //given
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+
+        //when
+        List<Member> result = memberRepository.findListByUsername("AAA");
+        Member aaa = memberRepository.findMemberByUsername("AAA");
+        Optional<Member> optionalMember = memberRepository.findOptionalByUsername("AAA");
+
+        //then
+        Assertions.assertThat(result.size()).isEqualTo(1);
+        Assertions.assertThat(aaa.getUsername()).isEqualTo(m1.getUsername());
+        Assertions.assertThat(optionalMember.get().getUsername()).isEqualTo(m1.getUsername());
     }
 
 }
