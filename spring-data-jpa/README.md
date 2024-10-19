@@ -138,14 +138,39 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
 ### 4. @Query를 사용하여 값, DTO 조회하기
 * 단순히 값 하나를 조회하는 방법
-```java
+```markdown
 @Query("select m.username from Member m")
 List<String> findUsernameList();
 ```
 
 * DTO로 직접 조회하는 방법
   * new 명령어 사용 필요
-```java
+```markdown
 @Query("select new study.data_jpa.dto.MemberDto(m.id, m.username, t.name) from Member m join m.team t")
 List<MemberDto> findMemberDto();
+```
+
+### 5. 파라미터 바인딩
+* 파라미터 바인딩에는 2가지가 있다.
+  * 위치 기반
+  * 이름 기반
+* 코드 가독성과 유지보수를 위해 이름 기반 파라미터 바인등을 사용하자
+```markdown
+select m from Member m where m.username = ?0 //위치 기반
+select m from Member m where m.username = :name //이름 기반
+```
+* 파라미터 바인딩
+```java
+import org.springframework.data.repository.query.Param
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    @Query("select m from Member m where m.username = :name")
+    Member findMembers(@Param("name") String username);
+}
+```
+
+* 컬렉션 파라미터 바인딩
+  * Collection 타입으로 in절 지원
+```java
+@Query("select m from Member m where m.username in :names")
+List<Member> findByNames(@Param("names") List<String> names);
 ```

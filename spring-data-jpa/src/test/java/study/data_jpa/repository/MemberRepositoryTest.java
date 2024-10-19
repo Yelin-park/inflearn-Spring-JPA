@@ -10,6 +10,7 @@ import study.data_jpa.dto.MemberDto;
 import study.data_jpa.entity.Member;
 import study.data_jpa.entity.Team;
 
+import java.util.Arrays;
 import java.util.List;
 
 @SpringBootTest
@@ -148,6 +149,21 @@ class MemberRepositoryTest {
         //then
         Assertions.assertThat(memberDto.get(0).getUserName()).isEqualTo(member.getUsername());
         Assertions.assertThat(memberDto.get(0).getTeamName()).isEqualTo(teamA.getName());
+    }
+
+    @Test
+    public void findByNames() throws Exception {
+        //given
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+
+        //when
+        List<Member> result = memberRepository.findByNames(Arrays.asList("AAA", "BBB"));
+
+        //then
+        Assertions.assertThat(result.size()).isEqualTo(2);
     }
 
 }
