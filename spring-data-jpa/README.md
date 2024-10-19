@@ -135,3 +135,17 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findUser(@Param("username") String username, @Param("age") int age);
 }
 ```
+
+### 4. @Query를 사용하여 값, DTO 조회하기
+* 단순히 값 하나를 조회하는 방법
+```java
+@Query("select m.username from Member m")
+List<String> findUsernameList();
+```
+
+* DTO로 직접 조회하는 방법
+  * new 명령어 사용 필요
+```java
+@Query("select new study.data_jpa.dto.MemberDto(m.id, m.username, t.name) from Member m join m.team t")
+List<MemberDto> findMemberDto();
+```
