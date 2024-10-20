@@ -216,3 +216,70 @@ public long totalCount(int age) {
         .getSingleResult();
     }
 ```
+
+### 8. 스프링 데이터 JPA 페이징과 정렬
+* 페이징과 정렬 파라미터
+  * `org.springframework.data.domain.Sort` : 정렬 기능
+  * `org.springframework.data.domain.Pageble` : 페이징 기능(내부에 Sort 포함)
+* 특별한 반환 타입
+  * `org.springframework.data.domain.Page` : 추가 count 쿼리 결과를 포함하는 페이징
+  * `org.springframework.data.domain.Slice` : 추가 count 쿼리 없이 다음 페이지만 확인 가능(내부적으로 limit + 1 조회)
+    * ex) 다음 페이지가 있는 걸 확인하고 더보기 할 수 있도록 간단하게 처리할 수 있음
+  * `List`(자바 컬렉션) : 추가 count 쿼리 없이 결과만 반환 
+* 페이징과 정렬 사용 예제
+```markdown
+Page<Member> findByUsername(String name, Pageable pageable); //count 쿼리 사용
+Slice<Member> findByUsername(String name, Pageable pageable); //count 쿼리 사용 안함
+List<Member> findByUsername(String name, Pageable pageable); //count 쿼리 사용 안함
+List<Member> findByUsername(String name, Sort sort);
+```
+* 조건
+  * 나이가 10살
+  * 이름으로 내림차순
+  * 첫 번째 페이지, 페이지당 보여줄 데이터는 3건
+* Page 사용 예제 정의 코드 
+  * 두 번째 파라미터로 받은 `Pageable`은 인터페이스다. 따라서 실제 사용할 때는 해당 인터페이스를 구현한 `org.springframework.data.domain.PageRequest` 객체를 사용한다.
+  * `PageRequest` 생성자의 첫 번째 파라미터에는 현재 페이지를, 두 번째 파라미터에는 조회할 데이터 수를 입력한다. 여기에 추가로 정렬 정보도 파라미터로 사용할 수 있다. 참고로 페이지는 0부터 시작한다.
+    * ```markdown
+      PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+      ```
+    * sort 조건이 복잡해지면 PageRequest보다 직접 쿼리에 넣어서 풀어내기  
+  * getContent : 조회된 데이터
+  * size : 조회된 데이터 수
+  * getTotalElements : 전체 데이터 수
+  * getNumber : 페이지 번호
+  * getTotalPage : 전체 페이지 번호
+```java
+public interface MemberRepository extends Repository<Member, Long> {
+    Page<Member> findByAge(int age, Pageable pageable);
+}
+```
+
+* count 쿼리는 조인할 필요가 없기 때문에 조회 쿼리가 복잡하거나 성능이 안나온다면 count 쿼리를 분리하여 사용할 수 있다.
+  * ```java
+    @Query(value = "select m from Member m",
+    countQuery = "select count(m.username) from Member m")
+    Page<Member> findMemberAllCountBy(Pageable pageable);
+    ```
+
+* Page를 유지하면서 엔티티를 DTO로 변환하기
+  * 절대 엔티티 자체를 외부에 노출시키면 안된다!!
+  ```java
+  Page<Member> page = memberRepository.findByAge(10, pageRequest);
+  Page<MemberDto> dtoPage = page.map(m -> new MemberDto());
+  ```
+
+* 참고) 스프링 부트 3, 하이버네이트 6 - left join 최적화
+  * 하이버네이트 6에서 의미없는 left join을 최적화하고 있다.
+  ```java
+  @Query(value = "select m from Member m left join m.team t")  
+  Page<Member> findByAge(int age, Pageable pageable);
+  
+  // SQL 실행 결과
+  // select m1_0.member_id, m1_0.age, m1_0.team_id, m1_0.username from member m1_0
+   ```
+  * 실행한 JPQL을 보면 select m from Member m left join m.team t 쿼리로 left join을 사용하고 있다.
+  * Member와 Team을 조인을 하지만 이 쿼리에서는 Team을 전혀 사용하지 않는다. 사실상 이 JPQL은 select m from Member m 이다.
+  * left join이기 때문에 왼쪽에 있는 Member 자체를 다 조회한다는 뜻이다. 만약, select나 where에 team의 조건이 들어간다면 정상적인 join 문이 보인다.
+  * JPA는 이 경우 최적화를 해서 join없이 해당 내용으로만 SQL을 만드는 것이다.
+ 

@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.*;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.data_jpa.dto.MemberDto;
@@ -13,6 +14,8 @@ import study.data_jpa.entity.Team;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
@@ -184,6 +187,46 @@ class MemberRepositoryTest {
         Assertions.assertThat(result.size()).isEqualTo(1);
         Assertions.assertThat(aaa.getUsername()).isEqualTo(m1.getUsername());
         Assertions.assertThat(optionalMember.get().getUsername()).isEqualTo(m1.getUsername());
+    }
+
+    @Test
+    public void paging() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        //when
+        int age = 10;
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+
+        // select m1_0.member_id,m1_0.age,m1_0.team_id,m1_0.username from member m1_0 where m1_0.age=10 order by m1_0.username desc fetch first 3 rows only;
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+        List<Member> content = page.getContent();
+
+        // Page를 유지하면서 DTO로 가져오기
+        Page<MemberDto> dtoPage = page.map(m -> new MemberDto(m.getId(), m.getUsername(), null));
+
+        // select m1_0.member_id,m1_0.age,m1_0.team_id,m1_0.username from member m1_0 where m1_0.age=10 order by m1_0.username desc fetch first 4 rows only;
+        Slice<Member> slice = memberRepository.findSliceByAge(age, pageRequest);
+        List<Member> sliceContent = slice.getContent();
+
+        //then
+        // page
+        assertThat(content.size()).isEqualTo(3); // 조회된 데이터 수
+        assertThat(page.getTotalElements()).isEqualTo(5); // 전체 데이터 수
+        assertThat(page.getNumber()).isEqualTo(0); // 페이지 번호
+        assertThat(page.getTotalPages()).isEqualTo(2); // 전체 페이지 번호
+        assertThat(page.isFirst()).isTrue(); // 첫번째 항목인지
+        assertThat(page.hasNext()).isTrue(); // 다음 페이지가 있는지
+
+        // slice
+        assertThat(sliceContent.size()).isEqualTo(3);
+        assertThat(slice.getNumber()).isEqualTo(0);
+        assertThat(slice.isFirst()).isTrue();
+        assertThat(slice.hasNext()).isTrue();
     }
 
 }
