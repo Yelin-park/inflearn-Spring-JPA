@@ -154,7 +154,7 @@ List<MemberDto> findMemberDto();
 * 파라미터 바인딩에는 2가지가 있다.
   * 위치 기반
   * 이름 기반
-* 코드 가독성과 유지보수를 위해 이름 기반 파라미터 바인등을 사용하자
+* 코드 가독성과 유지보수를 위해 이름 기반 파라미터 바인딩을 사용하자
 ```markdown
 select m from Member m where m.username = ?0 //위치 기반
 select m from Member m where m.username = :name //이름 기반
@@ -192,3 +192,27 @@ Optional<Member> findByUsername(String name); //단건 Optional
   * 이 메서드를 호출했을 때 결과가 없으면 `javax.persistence.NoResultException` 예외가 발생한다.
   * 스프링 데이터 JPA는 단건을 조회할 때 이 예외가 발생하면 예외를 무시하고 대신에 null을 반환한다.
   * Optional을 사용하면 Optional.empty가 넘어온다.
+
+### 7. 순수 JPA 페이징과 정렬
+* 조건
+  * 나이가 10살
+  * 이름으로 내림차순
+  * 첫 번째 페이지, 페이지당 보여줄 데이터는 3건
+* JPA 페이징 리포지토리 코드
+  * setFirstResult로 시작 페이지를 지정
+  * setMaxResults로 페이지당 보여줄 데이터 개수를 지정
+```java
+public List<Member> findByPage(int age, int offset, int limit) {
+    return em.createQuery("select m from Member m where m.age = :age order by m.username desc", Member.class)
+        .setParameter("age", age)
+        .setFirstResult(offset)
+        .setMaxResults(limit)
+        .getResultList();
+    }
+
+public long totalCount(int age) {
+    return em.createQuery("select count(m) from Member m where m.age = :age", Long.class)
+        .setParameter("age", age)
+        .getSingleResult();
+    }
+```
