@@ -3,6 +3,7 @@ package study.data_jpa.repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.assertj.core.api.Assertions;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -257,6 +258,35 @@ class MemberRepositoryTest {
 
         //then
         assertThat(resultCount).isEqualTo(3);
+    }
+
+    @Test
+    public void findMemberLazy() throws Exception {
+        //given
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        //when
+        // List<Member> members = memberRepository.findAll();
+        // List<Member> members = memberRepository.findMemberFetchJoin(); // JPQL fetch join
+        // List<Member> members = memberRepository.findEntityGraphByUsername("member1");
+        List<Member> members = memberRepository.findNamedEntityGraphByUsername("member1");
+
+        //then
+        for (Member member : members) {
+            System.out.println("member.getUsername() = " + member.getUsername());
+            System.out.println("member.getTeam().getName() = " + member.getTeam().getName());
+        }
     }
 
 }

@@ -312,6 +312,39 @@ public interface MemberRepository extends Repository<Member, Long> {
   * 벌크성 쿼리를 실행하고나서 영속성 컨텍스트 초기화 : `@Modifying(clearAutomatically = true)`, 이 옵션의 기본값은 false이다.
     * 이 옵션 없이 회원을 findById로 다시 조회하면 영속성 컨텍스트에 과거 값이 남아서 문제가 될 수 있다. 만약, 다시 조회해야 하면 꼭 영속성 컨텍스트를 초기회해야한다.
 
-
+### 10. @EntityGraph
+* 연관된 엔티티들을 SQL 한번에 조회하는 방법으로 JPQL에서는 fetch join을 사용했었다. 
+* 스프링 데이터 JPA에서는 엔티티 그래프 기능을 사용하면 JPQL 없이 페치 조인을 사용할 수 있다.(JPQL + 엔티티 그래프 기능)
+* 간단하게 말하면 페치 조인의 간편 버전이며, LEFT OUTER JOIN 사용한다.
+* 복잡한 쿼리는 JPQL로 페치 조인을 사용하고 간단하다면 메서드 이름 쿼리로 엔티티 그래프를 사용해보자
+* EntityGraph 사용 방법
+  * ```java
+    //공통 메서드 오버라이드
+    @Override
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findAll();
+    
+    //JPQL + 엔티티 그래프
+    @EntityGraph(attributePaths = {"team"})
+    @Query("select m from Member m")
+    List<Member> findMemberEntityGraph();
+    
+    //메서드 이름으로 쿼리에서 특히 편리하다.
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findByUsername(String username)
+    ```
+* NamedEntityGraph 사용 방법
+  * ```java
+    // Member Entity
+    @NamedEntityGraph(name = "Member.all", attributeNodes =
+    @NamedAttributeNode("team"))
+    @Entity
+    public class Member {}
+    
+    // MemberRepository
+    @EntityGraph("Member.all")
+    @Query("select m from Member m")
+    List<Member> findMemberEntityGraph();
+    ```
   
  
