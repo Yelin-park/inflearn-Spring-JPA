@@ -289,4 +289,47 @@ class MemberRepositoryTest {
         }
     }
 
+    @Test
+    public void queryHint() throws Exception {
+        //given
+        Member member1 = memberRepository.save(new Member("member1", 10));
+        em.flush();
+        em.clear();
+
+        //when
+        // Member findMember = memberRepository.findById(member1.getId()).get();
+        // 위의 쿼리로 찾아온 Member를 변경하면 변경감지가 일어나서 update 쿼리가 날아감
+
+        // Hint 사용
+        Member findMember = memberRepository.findReadOnlyByUsername("member1");
+        findMember.setUsername("member2");
+        em.flush(); // Update Query가 날아가지 않음
+
+        //then
+    }
+
+    @Test
+    public void lock() throws Exception {
+        //given
+        Member member1 = memberRepository.save(new Member("member1", 10));
+        em.flush();
+        em.clear();
+
+        //when
+        Member findMember = memberRepository.findLockByUsername("member1");
+
+        // 쿼리 결과
+        /*select
+        m1_0.member_id,
+                m1_0.age,
+                m1_0.team_id,
+                m1_0.username
+        from
+        member m1_0
+        where
+        m1_0.username=? for update*/
+
+        //then
+    }
+
 }

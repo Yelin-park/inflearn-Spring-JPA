@@ -346,5 +346,40 @@ public interface MemberRepository extends Repository<Member, Long> {
     @Query("select m from Member m")
     List<Member> findMemberEntityGraph();
     ```
-  
- 
+
+### 11. JPA Hint & Lock
+* **JPA Hint란?**
+  * JPA 쿼리 힌트, SQL 힌트가 아니라 JPA 구현체에게 제공하는 힌트이다.
+  * 스냅샷을 안만들고, 읽기 전용이라고 인식하고 데이터 변경을 하지 않는다.
+  * Query Hint 예제
+    ```java
+    @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
+    Member findReadOnlyByUsername(String username);
+    ```
+  * Query Hint Page 예제
+    ```java
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.readOnly", value = "true")}, forCounting = true)
+    Page<Member> findByUsername(String name, Pageable pageable);
+    ```
+    * `org.springframework.data.jpa.repository.QueryHints` 어노테이션을 사용
+    * `forCounting` : 반환 타입으로 `Page` 인터페이스를 적용하면 추가로 호출하는 페이징을 위한 count 쿼리도 쿼리 힌트 적용(기본값 `true`)
+    
+* **Lock**
+  * DB에서 select 할 때 건들지 말라고 Lock을 걸 수 있음
+  * `org.springframework.data.jpa.repository.Lock` 어노테이션을 사용
+    ```java
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Member findLockByUsername(String username);
+    
+    // 쿼리 결과
+    select
+    m1_0.member_id,
+    m1_0.age,
+    m1_0.team_id,
+    m1_0.username
+    from
+    member m1_0
+    where
+    m1_0.username=? for update
+    ```
+  * 구매한 책에서 참고하려면 16.1 트랜잭션과 락 절을 참고
