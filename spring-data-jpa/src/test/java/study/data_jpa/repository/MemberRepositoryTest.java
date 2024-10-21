@@ -1,5 +1,7 @@
 package study.data_jpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,9 @@ class MemberRepositoryTest {
 
     @Autowired
     TeamRepository teamRepository;
+
+    @PersistenceContext
+    EntityManager em;
 
     @Test
     public void testMember() throws Exception {
@@ -227,6 +232,31 @@ class MemberRepositoryTest {
         assertThat(slice.getNumber()).isEqualTo(0);
         assertThat(slice.isFirst()).isTrue();
         assertThat(slice.hasNext()).isTrue();
+    }
+
+    @Test
+    public void bulkUpdate() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 21));
+        memberRepository.save(new Member("member5", 30));
+
+        //when
+        int resultCount = memberRepository.bulkAgePlus(20);
+        List<Member> beforeResult = memberRepository.findByUsername("member5");
+        Member beforeMember5 = beforeResult.get(0);
+        System.out.println("beforeMember5 = " + beforeMember5);
+        /*em.flush();
+        em.clear();*/
+
+        List<Member> result = memberRepository.findByUsername("member5");
+        Member member5 = result.get(0);
+        System.out.println("member5 = " + member5);
+
+        //then
+        assertThat(resultCount).isEqualTo(3);
     }
 
 }

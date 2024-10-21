@@ -282,4 +282,36 @@ public interface MemberRepository extends Repository<Member, Long> {
   * Member와 Team을 조인을 하지만 이 쿼리에서는 Team을 전혀 사용하지 않는다. 사실상 이 JPQL은 select m from Member m 이다.
   * left join이기 때문에 왼쪽에 있는 Member 자체를 다 조회한다는 뜻이다. 만약, select나 where에 team의 조건이 들어간다면 정상적인 join 문이 보인다.
   * JPA는 이 경우 최적화를 해서 join없이 해당 내용으로만 SQL을 만드는 것이다.
+
+### 9. 벌크성 수정 쿼리
+* JPA를 사용한 벌크성 수정 쿼리
+* ```java
+  public int bulkAgePlus(int age) {
+    int resultCount = em.createQuery(
+            "update Member m set m.age = m.age + 1" +
+            "where m.age >= :age")
+            .setParameter("age", age)
+            .executeUpdate();
+        return resultCount;
+    }
+  ```
+
+* 스프링 데이터 JPA를 사용한 벌크성 수정 쿼리
+  * ```java
+    @Modifying(clearAutomatically = true)
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int bulkAgePlus(@Param("age") int age);
+    ```
+  * 반환 타입은 int로!
+  * 벌크성 수정, 삭제 쿼리는 `@Modifying` 어노테이션을 꼭 넣어줘야한다.
+    * 사용하지 않으면 `org.hibernate.hql.internal.QueryExecutionRequestException: Not supported for DML operations` 예외 발생
+  * 벌크 연산은 영속성 컨텍스트를 무시하고 실행하기 때문에, 영속성 컨텍스트에 있는 엔티티의 상태와 DB에 엔티티 상태가 달라질 수 있다.
+  * 권장 방안)
+    * 영속성 컨텍스트에 엔티티가 없는 상태에서 벌크 연산을 먼저 실행한다.
+    * 부득이하게 영속성 컨텍스트에 엔티티가 있으면 벌크 연산 직후 영속성 컨텍스트를 초기화한다.
+  * 벌크성 쿼리를 실행하고나서 영속성 컨텍스트 초기화 : `@Modifying(clearAutomatically = true)`, 이 옵션의 기본값은 false이다.
+    * 이 옵션 없이 회원을 findById로 다시 조회하면 영속성 컨텍스트에 과거 값이 남아서 문제가 될 수 있다. 만약, 다시 조회해야 하면 꼭 영속성 컨텍스트를 초기회해야한다.
+
+
+  
  
