@@ -383,3 +383,61 @@ public interface MemberRepository extends Repository<Member, Long> {
     m1_0.username=? for update
     ```
   * 구매한 책에서 참고하려면 16.1 트랜잭션과 락 절을 참고
+
+## 4. 확장 기능
+### 1. 사용자 정의 리포지토리 구현
+* 스프링 데이터 JPA 리포지토리는 인터페이스만 정의하고 구현체는 스프링이 자동 생성한다.
+* 스프링 데이터 JPA가 제공하는 인터페이스를 직접 구현하면 구현해야 하는 기능이 너무 많다.
+* 다양한 이유로 인터페이스의 메서드를 직접 구현하고 싶다면?
+  * JPA 직접 사용(EntityManager)
+  * 스프링 JDBC Template 사용
+  * MyBaits를 연결해서 사용
+  * 데이터 베이스 커넥션을 직접 연결해서 사용
+  * Querydsl 사용
+
+* **구현하는 방법**
+  * 사용자 정의 인터페이스 생성 -> 사용자 정의 인터페이스 구현 클래스 생성 -> 사용자 인터페이스 상속 -> 호출 
+  * 사용자 정의 인터페이스
+    * ```java
+      public interface MemberRepositoryCustom {
+        List<Member> findMemberCustom();
+      }
+      ```
+      
+  * 사용자 정의 인터페이스 구현 클래스
+    * ```java
+      @RequiredArgsConstructor
+      public class MemberRepositoryImpl implements MemberRepositoryCustom {
+
+         private final EntityManager em;
+
+         @Override
+         public List<Member> findMemberCustom() {
+           return em.createQuery("select m from Member m").getResultList();
+         }
+      }
+      ```
+      
+  * 사용자 정의 인터페이스 상속
+    * ```java
+      public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom { }
+      ```
+
+  * 사용자 정의 메서드 호출
+    * ```java
+      List<Member> result = memberRepository.findMemberCustom();
+      ```
+
+* 사용자 정의 구현 클래스
+  * 규칙 : 리포지토리 인터페이스 이름 + `Impl` ex)MemberRepositoryImpl
+    * 스프링 데이터 2.x 부터는 사용자 정의 인터페이스 이름 + `Impl` 방식도 지원(해당 방식이 직관적)
+  * 규칙을 지켜야 스프링 데이터 JPA가 인식해서 스프링 빈으로 등록
+  * Impl 대신 다른 이름으로 변경하고 싶다면 XML 설정 또는 JavaConfig 설정을 하면 된다.
+    * XML 설정
+    ```xml
+    <repositories base-package="study.datajpa.repository" repository-impl-postfix="Impl" />
+    ```
+    * JavaConfig 설정
+    ```java
+    @EnableJpaRepositories(basePackages = "study.datajpa.repository", repositoryImplementationPostfix = "Impl")
+    ```
