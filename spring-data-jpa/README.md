@@ -441,3 +441,106 @@ public interface MemberRepository extends Repository<Member, Long> {
     ```java
     @EnableJpaRepositories(basePackages = "study.datajpa.repository", repositoryImplementationPostfix = "Impl")
     ```
+
+### 2. Auditing
+* 엔티티를 생성하거나 변경할 때 변경한 사람과 시간을 추적하고 싶을 때 사용하는 기능이다.
+  * 등록일
+  * 수정일
+  * 등록자
+  * 수정자
+
+**순수 JPA 사용 방법**
+* BaseEntity 생성 후 생성한 BaseEntity를 사용할 Entity에 extends하여 상속받으면된다.
+  * 속성만 상속받게 해주기 위해서 @MappedSuperclass 어노테이션을 사용 
+  ```java
+  @MappedSuperclass
+  @Getter
+  public class JpaBaseEntity {
+  
+      @Column(updatable = false)
+      private LocalDateTime createdDate;
+      private LocalDateTime updatedDate;
+  
+      @PrePersist
+      public void prePersist() {
+          LocalDateTime now = LocalDateTime.now();
+          createdDate = now;
+          updatedDate = now;
+      }
+  
+      public void preUpdate() {
+          updatedDate = LocalDateTime.now();
+      }
+  }
+  
+  public class Member extends JpaBaseEntity {}
+  ```
+
+**스프링 데이터 JPA 사용 방법**
+* 설정
+  * `@EnableJpaAuditing` 스프링 부트 설정 클래스에 적용
+  * `@EntityListeners(AuditingEntityListener.class)` 엔티티에 적용
+  * 저장시점에 저장데이터만 입력하고 싶으면 @EnableJpaAuditing(modifyOnCreate = false) 옵션을 사용하면 된다.
+
+* BaseEntity 생성
+  ```java
+  @EntityListeners(AuditingEntityListener.class)
+  @MappedSuperclass
+  @Getter
+  public class BaseEntity {
+  
+      @CreatedDate
+      @Column(updatable = false)
+      private LocalDateTime createdDate;
+  
+      @LastModifiedDate
+      private LocalDateTime updatedDate;
+  
+      @CreatedBy
+      @Column(updatable = false)
+      private String createdBy;
+
+      @LastModifiedBy
+      private String lastModifiedBy;
+  }
+  ```
+  
+* 스프링 부트 설정 및 AuditorAware 스프링 빈 등록
+  * 등록 및 수정 이벤트가 발생하면 등록한 AuditorAware 빈을 호출해서 결과물을 가져와 값을 채워준다.
+  ```java
+  @EnableJpaAuditing
+  @SpringBootApplication
+  public class DataJpaApplication {
+  
+      public static void main(String[] args) {
+          SpringApplication.run(DataJpaApplication.class, args);
+      }
+  
+      // 등록자, 수정자를 처리해주는 AuditorAware를 스프링 빈으로 등록하기
+      @Bean
+      public AuditorAware<String> auditorProvider() {
+          return () -> Optional.of(UUID.randomUUID().toString());
+      }
+  
+  }
+  ```
+  
+* 전체 적용하는 방법
+  * `@EntityListeners(AuditingEntityListener.class)` 를 생략하고 스프링 데이터 JPA가 제공하는 이벤트를 엔티티 전체에 적용하려면 orm.xml에 다음과 같이 등록하면 된다.
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <entity-mappings xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm
+      http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd"
+  version="2.2">
+    
+      <persistence-unit-metadata>
+          <persistence-unit-defaults>
+              <entity-listeners>
+                  <entity-listener class="org.springframework.data.jpa.domain.support.AuditingEntityListener"/>
+              </entity-listeners>
+          </persistence-unit-defaults>
+      </persistence-unit-metadata>
+  </entity-mappings>
+  ```
