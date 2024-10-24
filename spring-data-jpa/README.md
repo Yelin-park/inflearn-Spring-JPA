@@ -578,3 +578,60 @@ public class MemberController {
     }
 }
 ```
+
+### 3. Web 확장 - 페이징과 정렬
+* 스프링 데이터가 제공하는 페이징과 정렬 기능을 스프링 MVC에서 편리하게 사용할 수 있다.
+* 엔티티를 직접 반환하지말고 DTO에 담아서 반환하자
+
+* **페이징과 정렬 예제**
+  * 파라미터로 Pageable을 받을 수 있다.(org.springframework.data.domain.PageRequest 객체 생성)
+```java
+@GetMapping("/members")
+public Page<Member> list(Pageable pageable) {
+    return memberRepository.findAll(pageable);
+}
+```
+
+* **요청 파라미터**
+  * ex) /members?page=0&size=3&sort=id,desc&sort=username,desc
+    * page : 현재 페이지, 0부터 시작
+    * size : 한 페이지에 노출할 데이터 건수
+    * sort : 정렬 조건을 정의. ex) 정렬 속성, 정렬 속성...(ASC|DESC), 정렬 방향을 변경하고 싶으면 sort 파라미터 추가하기
+
+* **기본값**
+  * 글로벌 성정 : 스프링 부트
+    * application.yml에 설정하
+      ```yaml
+      spring:
+        data:
+          web:
+            pageable:
+              default-page-size: 10 # 기본 페이지 사이즈
+              max-page-size: 2000 # 최대 페이지 사이즈
+      ``` 
+  * 개별 설정
+    * @PageableDefault 어노테이션을 사용
+    * 글로벌 설정보다 우선권을 가짐
+      ```java
+      @GetMapping("/members2")
+      public Page<Member> list2(
+      @PageableDefault(size = 15, sort = "username", direction = Sort.Direction.DESC)
+        Pageable pageable
+      ) {
+         return memberRepository.findAll(pageable);
+      }
+      ```
+      
+* **접두사**
+  * 페이징 정보가 둘 이상이면 접두사로 구분
+  * `@Qualifier` 에 접두사명 추가 "{접두사명}_xxx"
+  * ex) `/members?member_page=0&order_page=1`
+    ```java
+    public String list(
+        @Qualifier("member") Pageable memberPageable,
+        @Qualifier("order") Pageable orderPageable, ...
+    ```
+    
+* **Page를 1부터 시작하는 방법**
+  * 1. Pageable, Page를 파라미터와 응답 값으로 사용하지 않고, 직접 클래스를 만들어서(정의) 처리한다. 그리고 직접 PageRequest(Pageable 구현체)를 생성해서 리포지토리에 넘긴다. Page 대신 직접 만들어서 반환을 해야한다.
+  * 2. `spring.data.web.pageable.one-indexed-parameters` 를 `true`로 설정한다. 이 방법은 web에서 `page` 파라미터를 `-1` 처리 할 뿐이다. 따라서 응답 값인 `Page`에 모두 0 페이지 인덱스를 사용하는 한계가 있다.

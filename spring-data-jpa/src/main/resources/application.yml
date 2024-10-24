@@ -13,6 +13,13 @@ spring:
         format_sql: true #쿼리가 한줄이 아니라 예쁘게 보여지도록
         show_sql: true #jpa 실행하는 쿼리를 콘솔에 다 찍음
 
+  data:
+    web:
+      pageable:
+        default-page-size: 10 # 기본 페이지 사이즈
+        max-page-size: 2000 # 최대 페이이 사이즈
+        one-indexed-parameters: true # Page를 1부터 시작하기 위한 설정
+
 logging:
   level:
     org.hibernate.sql: debug #jpa 실행하는 쿼리를 콘솔이 아닌 로그 파일로 남기기
