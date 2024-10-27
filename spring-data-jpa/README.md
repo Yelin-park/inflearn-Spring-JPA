@@ -805,3 +805,60 @@ public interface NestedCloseProjections {
 ```java
 List<NestedCloseProjections> findNestedProjectionsByUsername(@Param("username") String username);
 ```
+
+### 네이티브 쿼리
+* JPA에서 제공하는 기능으로, SQL을 직접 작성하는 기능을 말한다.
+* JPA를 사용하면 가급적 네이티브 쿼리를 사용하지 않는게 좋지만 정말 어쩔 수 없을 때 사용하자
+```java
+@Query(value = "select * from member where username = ?", nativeQuery = true)
+Member findByNativeQuery(String username);
+```
+* **스프링 데이터 JPA 기반 네이티브 쿼리**
+  * 페이징 지원
+  * 반환 타입
+    * Object[]
+    * Tuple
+    * DTO(스프링 데이터 인터페이스 Projections 지원)
+  * 제약
+    * Sort 파라미터를 통한 정렬이 정상 동작하지 않을 수 있음
+    * JPQL처럼 애플리케이션 로딩 시점에 문법 확인 불가
+    * 동적 쿼리 불가능
+
+#### Projections 활용
+* 스프링 데이터 JPQ 네이티브 쿼리 + 인터페이스 기반 Projections 활용
+* 인터페이스 정의
+```java
+public interface MemberProjection {
+    Long getId();
+
+    String getUsername();
+
+    String getTeamName();
+}
+```
+
+* 사용 코드(반환 타입은 정의한 인터페이스)
+```java
+@Query(value = "select m.member_id as id, m.username, t.name as teamName "
+            + "from member m left join team t",
+            countQuery = "select count(*) from member",
+            nativeQuery = true)
+Page<MemberProjection> findByNativeProjection(Pageable pageable);
+```
+
+#### 동적 네이티브 쿼리
+* 하이버네이트를 직접 활용한다.
+* 스프링 JdbcTemplate, myBatis, jooq 같은 외부 라이브러리를 사용한다.
+  * ex) 하이버네이트 기능 사용
+  ```java
+  String sql = "select m.username as username from member m";
+  
+  List<MemberDto> result = em.createNativeQuery(sql)
+      .setFirstResult(0)
+      .setMaxResults(10)
+      .unwrap(NativeQuery.class)
+      .addScalar("username")
+      .setResultTransformer(Transformers.aliasToBean(MemberDto.class))
+      .getResultList();
+  }
+  ```
