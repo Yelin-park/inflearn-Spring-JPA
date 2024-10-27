@@ -717,5 +717,91 @@ public class Item implements Persistable<String> {
 ```
 
 ## 6. 나머지 기능들
-* Specifications(명세), Query By Example, Projections와 같은 기능이 있는데 해당 기능 설명은 정리하지 않겠다.
-* 
+* Specifications(명세), Query By Example은 정리하지 않음
+
+### Projections
+* 엔티티 대신에 DTO를 편리하게 조회할 때 사용한다.
+* 주의점
+  * 프로젝션 대상이 root 엔티티면, JPQL SELECT 절 최적화가 가능하다.
+  * 프로젝션 대상이 root가 아니면 LEFT OUTER JOIN 처리를 하고, 모든 필드를 SELECT해서 엔티티로 조회한 다음에 계산한다.
+* 정리
+  * 프로젝션 대상이 root 엔티티면 유용하다
+  * 복잡해지면 QueryDSL을 사용해서 해결하자
+
+#### 인터페이스 기반 Closed Projections
+* 조회할 엔티티의 필드를 getter 형식으로 지정하면 해당 필드만 선택해서 조회한다. 아래와 같이 interface를 정의해 주면된다.
+```java
+package study.data_jpa.repository;
+
+public interface UsernameOnly {
+    String getUsername();
+}
+```
+
+* MemberRepository에 만들었던 인터페이스를 반환 타입으로 지정해서 메서드를 만들어주면된다.
+```java
+// MemberRepository
+List<UsernameOnly> findProjectionsByUsername(@Param("username") String username);
+```
+
+#### 인터페이스 기반 Open Projections
+* 스프링의 SpEL 문법도 지원한다. 이렇게 SpEL문법을 사용하면, DB에서 엔티티 필드를 다 조회해 온 다음에 계산한다. 따라서 JPQL SELECT 절 최적화가 안된다.
+```java
+import org.springframework.beans.factory.annotation.Value;
+
+public interface UsernameOnly {
+    @Value("#{target.username + ' ' + target.age + ' ' + target.team.name}")
+    String getUsername();
+}
+```
+
+#### 클래스 기반 Projection
+* 생성자의 파라미터 이름으로 매칭한다.
+```java
+public class UsernameOnlyDto {
+
+    private final String username;
+
+    public UsernameOnlyDto(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+}
+```
+
+* 사용코드
+```java
+List<UsernameOnlyDto> findClassProjectionsByUsername(@Param("username") String username);
+```
+
+#### 동적 Projections
+* 다음과 같이 Generic type을 주면, 동적으로 프로젝션 데이터 변경이 가능하다.
+```java
+<T> List<T> findProjectionsByUsername(String username, Class<T> type);
+```
+
+* 사용코드
+```java
+List<UsernameOnly> result = memberRepository.findProjectionsByUsername("m1", UsernameOnly.class);
+```
+
+#### 중첩 구조 처리
+```java
+public interface NestedCloseProjections {
+    String getUsername();
+
+    TeamInfo getTeam();
+
+    interface TeamInfo {
+        String getName();
+    }
+}
+```
+
+* 사용코드
+```java
+List<NestedCloseProjections> findNestedProjectionsByUsername(@Param("username") String username);
+```
