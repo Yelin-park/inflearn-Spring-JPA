@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -44,9 +45,9 @@ class MemberRepositoryTest {
         Member findMember = memberRepository.findById(savedMember.getId()).get();
 
         //then
-        Assertions.assertThat(findMember.getId()).isEqualTo(member.getId());
-        Assertions.assertThat(findMember.getUsername()).isEqualTo(member.getUsername());
-        Assertions.assertThat(findMember).isEqualTo(member);
+        assertThat(findMember.getId()).isEqualTo(member.getId());
+        assertThat(findMember.getUsername()).isEqualTo(member.getUsername());
+        assertThat(findMember).isEqualTo(member);
     }
 
     @Test
@@ -63,23 +64,23 @@ class MemberRepositoryTest {
 
         //then
         // 단건 조회 검증
-        Assertions.assertThat(findMember1).isEqualTo(member1);
-        Assertions.assertThat(findMember2).isEqualTo(member2);
+        assertThat(findMember1).isEqualTo(member1);
+        assertThat(findMember2).isEqualTo(member2);
 
         // 리스트 조회 검증
         List<Member> all = memberRepository.findAll();
-        Assertions.assertThat(all.size()).isEqualTo(2);
+        assertThat(all.size()).isEqualTo(2);
 
         // 카운트 검증
         long count = memberRepository.count();
-        Assertions.assertThat(count).isEqualTo(2);
+        assertThat(count).isEqualTo(2);
 
         // 삭제 검증
         memberRepository.delete(member1);
         memberRepository.delete(member2);
 
         long deletedCount = memberRepository.count();
-        Assertions.assertThat(deletedCount).isEqualTo(0);
+        assertThat(deletedCount).isEqualTo(0);
     }
 
     @Test
@@ -94,9 +95,9 @@ class MemberRepositoryTest {
         List<Member> result = memberRepository.findByUsernameAndAgeGreaterThan("AAA", 15);
 
         //then
-        Assertions.assertThat(result.get(0).getUsername()).isEqualTo("AAA");
-        Assertions.assertThat(result.get(0).getAge()).isEqualTo(20);
-        Assertions.assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getUsername()).isEqualTo("AAA");
+        assertThat(result.get(0).getAge()).isEqualTo(20);
+        assertThat(result.size()).isEqualTo(1);
     }
 
     @Test
@@ -111,7 +112,7 @@ class MemberRepositoryTest {
         List<Member> result = memberRepository.findByUsername("AAA");
 
         //then
-        Assertions.assertThat(result.get(0)).isEqualTo(m1);
+        assertThat(result.get(0)).isEqualTo(m1);
     }
 
     @Test
@@ -126,7 +127,7 @@ class MemberRepositoryTest {
         List<Member> result = memberRepository.findUser("AAA", 10);
 
         //then
-        Assertions.assertThat(result.get(0)).isEqualTo(m1);
+        assertThat(result.get(0)).isEqualTo(m1);
     }
 
     @Test
@@ -141,7 +142,7 @@ class MemberRepositoryTest {
         List<String> result = memberRepository.findUsernameList();
 
         //then
-        Assertions.assertThat(result.size()).isEqualTo(2);
+        assertThat(result.size()).isEqualTo(2);
     }
 
     @Test
@@ -157,8 +158,8 @@ class MemberRepositoryTest {
         List<MemberDto> memberDto = memberRepository.findMemberDto();
 
         //then
-        Assertions.assertThat(memberDto.get(0).getUserName()).isEqualTo(member.getUsername());
-        Assertions.assertThat(memberDto.get(0).getTeamName()).isEqualTo(teamA.getName());
+        assertThat(memberDto.get(0).getUserName()).isEqualTo(member.getUsername());
+        assertThat(memberDto.get(0).getTeamName()).isEqualTo(teamA.getName());
     }
 
     @Test
@@ -173,7 +174,7 @@ class MemberRepositoryTest {
         List<Member> result = memberRepository.findByNames(Arrays.asList("AAA", "BBB"));
 
         //then
-        Assertions.assertThat(result.size()).isEqualTo(2);
+        assertThat(result.size()).isEqualTo(2);
     }
 
     @Test
@@ -190,9 +191,9 @@ class MemberRepositoryTest {
         Optional<Member> optionalMember = memberRepository.findOptionalByUsername("AAA");
 
         //then
-        Assertions.assertThat(result.size()).isEqualTo(1);
-        Assertions.assertThat(aaa.getUsername()).isEqualTo(m1.getUsername());
-        Assertions.assertThat(optionalMember.get().getUsername()).isEqualTo(m1.getUsername());
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(aaa.getUsername()).isEqualTo(m1.getUsername());
+        assertThat(optionalMember.get().getUsername()).isEqualTo(m1.getUsername());
     }
 
     @Test
@@ -336,6 +337,35 @@ class MemberRepositoryTest {
     public void callCustom() throws Exception {
         //given
         List<Member> result = memberRepository.findMemberCustom();
+    }
+
+    @Test
+    public void queryByExample() throws Exception {
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        // Probe(필드에 데이터가 있는 실제 도메인 객체)
+        Member member = new Member("m1");
+        Team team = new Team("teamA");
+        member.setTeam(team);
+
+        // 특정 필드를 일치시키는 상세한 정보 제공, 재사용 가능
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("age");
+
+        // Probe와 ExampleMatcher로 구성, 쿼리를 생성하는데 사용
+        Example<Member> example = Example.of(member, matcher);// 엔티티로 검색 조건으로 만듬
+
+        List<Member> result = memberRepository.findAll(example); // example을 넘겨서 찾을 수 있음
+
+        assertThat(result.get(0).getUsername()).isEqualTo("m1");
     }
 
 }

@@ -715,3 +715,7 @@ public class Item implements Persistable<String> {
     }
 }
 ```
+
+## 6. 나머지 기능들
+* Specifications(명세), Query By Example, Projections와 같은 기능이 있는데 해당 기능 설명은 정리하지 않겠다.
+* 
