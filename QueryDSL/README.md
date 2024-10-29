@@ -65,3 +65,33 @@
     * Gradle -> Tasks -> build -> build
     * build -> generated -> sources -> annotaionProcessor -> java -> main 안에 Q파일이 생성된 것을 확인
     * 참고) Q타입은 컴파일 시점에 자동 생성되므로 버전관리에 포함하지 않는 것이 좋다.
+
+## 1. QueryDSL 기본 문법
+* 아하 모먼트!
+  * JPAQueryFactory를 필드로 제공하면 동시성 문제에 대해서는 어떻게 되는가?
+    * JPAQueryFactory를 생성할 때 제공하는 EntityManager에 달려있다.
+    * 스프링 프레임워크는 여러 쓰레드에서 동시에 같은 EntityManager에 접근해도, 트랜잭션 마다 별도의 영속성 컨텍스트를 제공하기 때문에 동시성 문제는 걱정하지 않아도 된다.
+  * 다음과 같이 설정을 추가하면 실행되는 JPQL을 볼 수 있다.
+    * spring.jpa.properties.hibernate.use_sql_comments: true
+
+### 1. 기본 Q-Type 활용
+* Q클래스 인스턴스를 사용하는 2가지 방법
+  * 별칭 직접 지정 : QMember qMember = new QMember("m");
+  * 기본 인스턴스 사용 : QMember qMember = QMember.member;
+  * 참고) 같은 테이블을 조인해야 하는 경우가 아니면 기본 인스턴스를 사용하자
+
+* 기본 인스턴스를 static import와 함께 사용
+```java
+import static study.querydsl.entity.QMember.*;
+
+@Test
+public void startQuerydsl3() throws Exception {
+        Member findMember = queryFactory
+        .select(member)
+        .from(member)
+        .where(member.username.eq("member1")) // 자동으로 파라미터 바인딩 처리
+        .fetchOne();
+
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+        }
+```
